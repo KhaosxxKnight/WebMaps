@@ -54,6 +54,8 @@
       border-radius: 5px;
       box-shadow: 0 0 15px rgba(0,0,0,0.2);
       z-index: 1000;
+      max-height: 80vh;
+      overflow-y: auto;
     }
     .layer-controls button {
       display: block;
@@ -61,11 +63,28 @@
       padding: 8px 12px;
       width: 100%;
       cursor: pointer;
+      border: 1px solid #ddd;
+      border-radius: 3px;
+      background: white;
+      text-align: left;
     }
     .layer-controls button.active {
       background-color: #4CAF50;
       color: white;
       font-weight: bold;
+    }
+    .layer-controls button.geojson-active {
+      background-color: #2196F3;
+      color: white;
+    }
+    .layer-controls h4 {
+      margin: 0 0 10px 0;
+      color: #333;
+    }
+    .layer-group {
+      margin: 10px 0;
+      padding: 5px;
+      border-left: 3px solid #ccc;
     }
   </style>
 </head>
@@ -74,18 +93,26 @@
   
   <!-- Блок управления слоями -->
   <div class="layer-controls">
-    <h4>Слои</h4>
+    <h4>Растровые слои</h4>
     <button id="layer1" class="active">my1_rgb_fixed.tif</button>
     <button id="layer2">3.geojson</button>
     <button id="layer3">Landsat.tif</button>
     <button id="layer4">Sentinal.tif</button>
-    <button id="layer5">Umbra1.tif</button>
+    <button id="layer5">Umbra3.tif</button>
+    
+    <div class="layer-group">
+      <h4>Векторные слои</h4>
+      <button id="togglePoints">Точки</button>
+      <button id="toggleLines">Линии</button>
+      <button id="togglePolygons">Полигоны</button>
+      <button id="clearVectors">Очистить векторы</button>
+    </div>
   </div>
   
   <div class="info" id="info"><h4>GeoTIFF Viewer</h4>...</div>
   <div class="loading" id="loading">Загрузка карты...</div>
 
-  <!-- OpenLayers + geotiff.js (ОБА необходимы!) -->
+  <!-- OpenLayers + geotiff.js -->
   <script src="https://cdn.jsdelivr.net/npm/ol@v9.2.4/dist/ol.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/geotiff@2.0.7/dist-browser/geotiff.js"></script>
 
