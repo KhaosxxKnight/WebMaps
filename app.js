@@ -32,6 +32,11 @@ let geoTiffLayer2 = null;
 let geoTiffLayer4 = null;
 let geoTiffLayer5 = null;
 
+// Новые переменные для векторных слоев
+let pointsLayer = null;
+let linesLayer = null;
+let polygonsLayer = null;
+
 // Информационная панель
 function updateInfo(text) {
   infoElement.innerHTML = '<h4>GeoTIFF Viewer</h4>' + (text || '...');
@@ -49,12 +54,48 @@ function setActiveButton(buttonId) {
   }
 }
 
+// Функция для переключения состояния векторных кнопок
+function toggleVectorButton(buttonId, isActive) {
+  const button = document.getElementById(buttonId);
+  if (button) {
+    if (isActive) {
+      button.classList.add('active');
+    } else {
+      button.classList.remove('active');
+    }
+  }
+}
+
 // Функция удаления текущего слоя
 function removeCurrentLayer() {
   if (currentLayer) {
     map.removeLayer(currentLayer);
     currentLayer = null;
   }
+}
+
+// Функция удаления всех векторных слоев
+function removeAllVectorLayers() {
+  if (pointsLayer) {
+    map.removeLayer(pointsLayer);
+    pointsLayer = null;
+    toggleVectorButton('togglePoints', false);
+  }
+  
+  if (linesLayer) {
+    map.removeLayer(linesLayer);
+    linesLayer = null;
+    toggleVectorButton('toggleLines', false);
+  }
+  
+  if (polygonsLayer) {
+    map.removeLayer(polygonsLayer);
+    polygonsLayer = null;
+    toggleVectorButton('togglePolygons', false);
+  }
+  
+  console.log("Все векторные слои удалены");
+  updateInfo("Векторные слои очищены");
 }
 
 // Улучшенная функция подгонки карты под границы источника
@@ -250,6 +291,7 @@ async function loadLayer3() {
     }
   }
 }
+
 // Загрузка третьего GeoTIFF (Sentinal.tif)
 async function loadLayer4() {
   try {
@@ -360,6 +402,134 @@ async function loadLayer5() {
   }
 }
 
+// Функции для векторных слоев
+async function togglePoints() {
+  try {
+    if (pointsLayer) {
+      map.removeLayer(pointsLayer);
+      pointsLayer = null;
+      toggleVectorButton('togglePoints', false);
+      console.log("Слой точек удален");
+      return;
+    }
+
+    const geojsonUrl = "points.geojson";
+    console.log("Загружаю точки:", geojsonUrl);
+
+    const response = await fetch(geojsonUrl);
+    if (!response.ok) throw new Error(`Файл не найден: ${response.status}`);
+
+    const vectorSource = new ol.source.Vector({
+      url: geojsonUrl,
+      format: new ol.format.GeoJSON()
+    });
+
+    pointsLayer = new ol.layer.Vector({
+      source: vectorSource,
+      style: new ol.style.Style({
+        image: new ol.style.Circle({
+          radius: 6,
+          fill: new ol.style.Fill({ color: 'red' }),
+          stroke: new ol.style.Stroke({ color: 'white', width: 2 })
+        })
+      })
+    });
+
+    map.addLayer(pointsLayer);
+    toggleVectorButton('togglePoints', true);
+    console.log("Слой точек добавлен");
+
+  } catch (err) {
+    console.error("Ошибка загрузки точек:", err);
+    updateInfo("Ошибка загрузки точек: " + err.message);
+  }
+}
+
+async function toggleLines() {
+  try {
+    if (linesLayer) {
+      map.removeLayer(linesLayer);
+      linesLayer = null;
+      toggleVectorButton('toggleLines', false);
+      console.log("Слой линий удален");
+      return;
+    }
+
+    const geojsonUrl = "lines.geojson";
+    console.log("Загружаю линии:", geojsonUrl);
+
+    const response = await fetch(geojsonUrl);
+    if (!response.ok) throw new Error(`Файл не найден: ${response.status}`);
+
+    const vectorSource = new ol.source.Vector({
+      url: geojsonUrl,
+      format: new ol.format.GeoJSON()
+    });
+
+    linesLayer = new ol.layer.Vector({
+      source: vectorSource,
+      style: new ol.style.Style({
+        stroke: new ol.style.Stroke({
+          color: 'blue',
+          width: 3
+        })
+      })
+    });
+
+    map.addLayer(linesLayer);
+    toggleVectorButton('toggleLines', true);
+    console.log("Слой линий добавлен");
+
+  } catch (err) {
+    console.error("Ошибка загрузки линий:", err);
+    updateInfo("Ошибка загрузки линий: " + err.message);
+  }
+}
+
+async function togglePolygons() {
+  try {
+    if (polygonsLayer) {
+      map.removeLayer(polygonsLayer);
+      polygonsLayer = null;
+      toggleVectorButton('togglePolygons', false);
+      console.log("Слой полигонов удален");
+      return;
+    }
+
+    const geojsonUrl = "polygons.geojson";
+    console.log("Загружаю полигоны:", geojsonUrl);
+
+    const response = await fetch(geojsonUrl);
+    if (!response.ok) throw new Error(`Файл не найден: ${response.status}`);
+
+    const vectorSource = new ol.source.Vector({
+      url: geojsonUrl,
+      format: new ol.format.GeoJSON()
+    });
+
+    polygonsLayer = new ol.layer.Vector({
+      source: vectorSource,
+      style: new ol.style.Style({
+        stroke: new ol.style.Stroke({
+          color: 'green',
+          width: 2
+        }),
+        fill: new ol.style.Fill({
+          color: 'rgba(0, 255, 0, 0.2)'
+        })
+      })
+    });
+
+    map.addLayer(polygonsLayer);
+    toggleVectorButton('togglePolygons', true);
+    console.log("Слой полигонов добавлен");
+
+  } catch (err) {
+    console.error("Ошибка загрузки полигонов:", err);
+    updateInfo("Ошибка загрузки полигонов: " + err.message);
+  }
+}
+
 // Инициализация карты
 (async function () {
   try {
@@ -375,6 +545,12 @@ async function loadLayer5() {
     document.getElementById('layer4').addEventListener('click', loadLayer4);
     document.getElementById('layer5').addEventListener('click', loadLayer5);
     
+    // Добавляем обработчики для векторных кнопок
+    document.getElementById('togglePoints').addEventListener('click', togglePoints);
+    document.getElementById('toggleLines').addEventListener('click', toggleLines);
+    document.getElementById('togglePolygons').addEventListener('click', togglePolygons);
+    document.getElementById('clearVectors').addEventListener('click', removeAllVectorLayers);
+
     console.log("Карта инициализирована успешно");
     
   } catch (err) {
