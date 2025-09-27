@@ -165,13 +165,18 @@ async function loadLayer1() {
         opacity: 0.9,
       });
 
-      // Немедленно пытаемся приблизиться
+      // Немедленно пытаемся приблизиться при первой загрузке
       await fitToGeoTIFF(geoTiffSource, 'my1_rgb_fixed');
     }
 
     map.addLayer(geoTiffLayer1);
     currentLayer = geoTiffLayer1;
     console.log("GeoTIFF слой добавлен!");
+
+    // Всегда подгоняем карту при переключении на слой
+    if (geoTiffLayer1.getSource().getState() === 'ready') {
+      fitToGeoTIFF(geoTiffLayer1.getSource(), 'my1_rgb_fixed');
+    }
 
     setActiveButton('layer1');
     updateInfo("Файл: my1_rgb_fixed.tif");
@@ -233,6 +238,19 @@ async function loadLayer2() {
 
     map.addLayer(geojsonLayer);
     currentLayer = geojsonLayer;
+
+    // Всегда подгоняем карту при переключении на GeoJSON слой
+    if (geojsonLayer.getSource().getState() === 'ready') {
+      const extent = geojsonLayer.getSource().getExtent();
+      if (extent && extent[0] !== Infinity) {
+        map.getView().fit(extent, {
+          padding: [50, 50, 50, 50],
+          maxZoom: 15,
+          duration: 1000,
+        });
+      }
+    }
+
     setActiveButton('layer2');
     updateInfo("Активный слой: 3.geojson");
     
@@ -272,12 +290,18 @@ async function loadLayer3() {
         opacity: 0.9,
       });
 
-      fitToGeoTIFF(geoTiffSource);
+      // Подгоняем при первой загрузке
+      await fitToGeoTIFF(geoTiffSource, 'Landsat');
     }
 
     map.addLayer(geoTiffLayer2);
     currentLayer = geoTiffLayer2;
     console.log("Landsat GeoTIFF слой добавлен!");
+
+    // Всегда подгоняем карту при переключении на слой
+    if (geoTiffLayer2.getSource().getState() === 'ready') {
+      fitToGeoTIFF(geoTiffLayer2.getSource(), 'Landsat');
+    }
 
     setActiveButton('layer3');
     updateInfo("Активный слой: Landsat.tif");
@@ -322,12 +346,18 @@ async function loadLayer4() {
         opacity: 0.9,
       });
 
-      fitToGeoTIFF(geoTiffSource);
+      // Подгоняем при первой загрузке
+      await fitToGeoTIFF(geoTiffSource, 'Sentinal');
     }
 
     map.addLayer(geoTiffLayer4);
     currentLayer = geoTiffLayer4;
     console.log("Sentinal.tif GeoTIFF слой добавлен!");
+
+    // Всегда подгоняем карту при переключении на слой
+    if (geoTiffLayer4.getSource().getState() === 'ready') {
+      fitToGeoTIFF(geoTiffLayer4.getSource(), 'Sentinal');
+    }
 
     setActiveButton('layer4');
     updateInfo("Активный слой: Sentinal.tif");
@@ -357,41 +387,36 @@ async function loadLayer5() {
         throw new Error(`Файл не найден: ${response.status} ${response.statusText}`);
       }
 
-      // Пробуем разные комбинации настроек
       const geoTiffSource = new ol.source.GeoTIFF({
         sources: [
           {
             url: tiffUrl,
             bands: [1, 2, 3],
-            // Добавляем явные диапазоны значений
             min: 0,
             max: 255
           },
         ],
-        normalize: true, // Включаем нормализацию
+        normalize: true,
         wrapX: false,
       });
 
       geoTiffLayer5 = new ol.layer.WebGLTile({
         source: geoTiffSource,
-        opacity: 1.0, // Увеличиваем непрозрачность
+        opacity: 1.0,
       });
 
-      // Отладочная информация
-      geoTiffSource.on('change', () => {
-        const state = geoTiffSource.getState();
-        console.log("Состояние источника Umbra3.tif:", state);
-        
-        if (state === 'ready') {
-          console.log("Umbra3.tif загружен успешно");
-          fitToGeoTIFF(geoTiffSource, 'Umbra3');
-        }
-      });
+      // Подгоняем при первой загрузке
+      await fitToGeoTIFF(geoTiffSource, 'Umbra3');
     }
 
     map.addLayer(geoTiffLayer5);
     currentLayer = geoTiffLayer5;
     console.log("Umbra3.tif GeoTIFF слой добавлен!");
+
+    // Всегда подгоняем карту при переключении на слой
+    if (geoTiffLayer5.getSource().getState() === 'ready') {
+      fitToGeoTIFF(geoTiffLayer5.getSource(), 'Umbra3');
+    }
 
     setActiveButton('layer5');
     updateInfo("Активный слой: Umbra3.tif");
@@ -401,7 +426,6 @@ async function loadLayer5() {
     updateInfo("Ошибка загрузки Umbra3.tif: " + err.message);
   }
 }
-
 // Функции для векторных слоев
 async function togglePoints() {
   try {
